@@ -4,9 +4,14 @@ import random
 # импортируем класс для создания экземпляра FastAPI-приложения
 from fastapi import FastAPI
 from fast_api_handler import FastApiHandler
+from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_client import Histogram, Counter
 
 # создаём экземпляр FastAPI-приложения
 app = FastAPI()
+
+instrumentator = Instrumentator()
+instrumentator.instrument(app).expose(app)
 
 handler = FastApiHandler()
 
@@ -15,6 +20,17 @@ handler = FastApiHandler()
 def read_root():
     return {"Hello": "World"}
 
+
+# main_app_predictions — объект метрики
+main_app_predictions = Histogram(
+    # имя метрики
+    "main_app_predictions",
+    # описание метрики
+    "Histogram of predictions",
+    # указываем корзины для гистограммы
+    buckets=(1, 2, 4, 5, 10)
+) 
+main_app_positive_predictions = Counter('main_app_positive_predictions', 'Number of positive predictions')
 
 # обрабатываем запросы к специальному пути для получения предсказания модели
 # временно имитируем предсказание со случайной генерацией score
@@ -35,7 +51,10 @@ def is_credit_approved(client_id: str, model_params: dict):
         "model_params": model_params
     }
     user_prediction = handler.handle(all_params)
-    score = user_prediction["predicted_credit_rating"]
+    score: float = user_prediction["predicted_credit_rating"]
+    main_app_predictions.observe(score)
+    if score > 600:
+        main_app_positive_predictions.inc()
     return {"client_id": client_id, "approved": 1 if score > 600 else 0}
 
 

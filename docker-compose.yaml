@@ -1,27 +1,22 @@
 services:
-  main-app:  
+  main-app:
     env_file:
       - ./.env
     build:
-      dockerfile: Dockerfile_main
+      dockerfile: Dockerfile
     ports:
-      - "${MAIN_APP_PORT_VM}:${MAIN_APP_PORT}"
-    #
-    # указываем тома
+      - "${APP_VM_PORT}:${APP_DOCKER_PORT}"
     volumes:
-        # тип тома 
       - type: bind
-        # директория на ВМ
-        source: ./speeches
-        # директория в контейнере
-        target: /app_with_counter/speeches
-        #
+        source: ./models
+        target: /churn_app/models
 
-  counter-app:
-    env_file:
-      - ./.env
-    build:
-      dockerfile: Dockerfile_counter
-    hostname: counter
+  prometheus:
+    image: prom/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
     ports:
-      - "${COUNTER_APP_PORT_VM}:${COUNTER_APP_PORT}"
+      - 9090:9090
+    volumes:
+      - "./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+    hostname: prometheus

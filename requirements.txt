@@ -1,6 +1,8 @@
 fastapi>=0.115.12
 pydantic==1.10.20
 uvicorn[standard]>=0.34.3
+prometheus-fastapi-instrumentator~=7.0.0
+prometheus-client~=0.21.0
 
 catboost==1.2.7
 scikit-learn==1.6.0
